@@ -8,6 +8,7 @@ myColorFinder = ColorFinder(False) # habilita o trackbar para identificacao da c
 # Custom Color
 # hsvVals = {'hmin': 58, 'smin': 13, 'vmin': 116, 'hmax': 164, 'smax': 34, 'vmax': 174}
 hsvVals = {'hmin': 16, 'smin': 45, 'vmin': 89, 'hmax': 24, 'smax': 151, 'vmax': 178}
+
 # filtra a imagem inicial para algo que possa ser processado e classificado
 def preProcessing(imgOriginal):
     #---BLUR---
@@ -50,23 +51,25 @@ while True:
     # marca a imagem original com os identificadores provenientes de imgPre, gerando uma nova imagem
 
     totalMoney = 0  # variavel para contagem das moedas
+    imgEmpty = np.zeros((480, 640, 3), np.uint8)
+
     if conFound:
         for count, contour in enumerate(conFound):  # retorna, respectivamente, a posicao e cada elemento de conFound
             peri = cv2.arcLength(contour['cnt'], True)
             approx = cv2.approxPolyDP(contour['cnt'], 0.02 * peri, True)
 
             if len(approx)>5:   # um poligono com mais de 5 lados sera considerado um circulo aqui
-                # print(contour['area'])
+                print(contour['area'])
                 area = contour['area']  # obtem o valor da area do poligono
                 
                 # Recorta cada moeda em imagens cortadas individuais
                 x, y, w, h = contour['bbox']
                 imgCrop = img[y:y+h, x:x+w]
-                cv2.imshow(str(count), imgCrop)
+                # cv2.imshow(str(count), imgCrop)
 
                 imgColor, mask = myColorFinder.update(img, hsvVals) # cria uma mascara com base num filtro de cor
                 whitePixelCount = cv2.countNonZero(mask) # conta todos os valores nao nulos da mascara
-                print(whitePixelCount)
+                # print(whitePixelCount)
 
                 # classifica as moedas da menor para a maior, conforme o tamanho
                 # (valores obtidos empiricamente para o setup construído)
@@ -81,10 +84,11 @@ while True:
                 
         #print(f'R$: {totalMoney}')
     
-    imgStack = cvzone.stackImages([img, imgPre, imgContours], 2, 1) # apresenta varias imagens numa mesma janela
-    cvzone.putTextRect(imgStack, f'R$: {totalMoney}', (50,50))  # escreve o valor em R$ calculado
+    cvzone.putTextRect(imgEmpty, f'R$: {totalMoney}', (100,200), scale=8, offset=50, thickness=8) # escreve o valor em R$ calculado
+
+    imgStack = cvzone.stackImages([img, imgPre, imgContours, imgEmpty], 2, 1) # apresenta varias imagens numa mesma janela
     cv2.imshow('webcam',imgStack)     # abre uma janela com as imagens selecionadas 
-    cv2.imshow('colors',imgColor)
+    # cv2.imshow('colors',imgColor)
     if cv2.waitKey(1) & 0xFF == ord('q'): # condicao de saida do loop
         break
         
